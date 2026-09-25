@@ -33,4 +33,4 @@ jobs:
           done
 
           test "$state" = "active"
-          gh workflow run 2-working-tree-staging-commit.yml --ref feature/robot-status
+          gh workflow run 2-working-tree-staging-commit.yml --ref feature/robot-status --repo "$GITHUB_REPOSITORY"
