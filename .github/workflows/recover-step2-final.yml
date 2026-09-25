@@ -1,0 +1,36 @@
+name: Recover Step 2 final
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/recover-step2-final.yml"
+
+permissions:
+  actions: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable and dispatch Step 2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/2-working-tree-staging-commit.yml" --jq '.state')"
+          if [ "$state" != "active" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/2-working-tree-staging-commit.yml/enable"
+          fi
+
+          for attempt in {1..10}; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/2-working-tree-staging-commit.yml" --jq '.state')"
+            if [ "$state" = "active" ]; then
+              break
+            fi
+            sleep 1
+          done
+
+          test "$state" = "active"
+          gh workflow run 2-working-tree-staging-commit.yml --ref feature/robot-status
